@@ -1,0 +1,5 @@
+torch
+torchvision
+torchaudio
+deep-sort-realtime
+ultralytics

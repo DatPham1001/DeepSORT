@@ -6,8 +6,18 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 # Danh sách các lớp cần theo dõi (dựa trên COCO classes)
 filter_classes = [2, 3, 7]  # Car, Motorcycle, Truck
 
+# Kiểm tra và thiết lập thiết bị
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
+print(f"Using device: {device}")
+
+# Đọc danh sách class từ file
+with open("classname.txt", "r") as f:
+    class_names = f.read().strip().split("\n")
+
 # Load YOLOv8 model
-model = YOLO('weights/yolo11n.pt')  # Sử dụng mô hình YOLOv8 (tiny model)
+model = YOLO('weights/yolo11s.pt')  # Sử dụng mô hình YOLOv8 (tiny model)
+model.to(device)
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
 # Khởi tạo DeepSORT
@@ -55,10 +65,13 @@ while cap.isOpened():
         track_id = track.track_id
         ltrb = track.to_ltrb()  # left, top, right, bottom
         x1, y1, x2, y2 = map(int, ltrb)
+        # Lấy tên lớp từ class_names
+        class_id = track.det_class
+        class_name = class_names[class_id] if class_id < len(class_names) else "Unknown"
 
         # Vẽ bounding box và ID
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(frame, f"ID: {track_id}", (x1, y1 - 10),
+        cv2.putText(frame, f"ID: {track_id} {class_name}", (x1, y1 - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
     # Ghi vào file output
