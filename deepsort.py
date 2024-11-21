@@ -4,11 +4,11 @@ from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
 
 # Danh sách các lớp cần theo dõi (dựa trên COCO classes)
-filter_classes = [2, 3, 7]  # Car, Motorcycle, Truck
+filter_classes = [1,2,3]  # Car, Motorcycle, Truck
 
 # Kiểm tra và thiết lập thiết bị
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cpu")
 print(f"Using device: {device}")
 
 # Đọc danh sách class từ file
@@ -16,15 +16,15 @@ with open("classname.txt", "r") as f:
     class_names = f.read().strip().split("\n")
 
 # Load YOLOv8 model
-model = YOLO('weights/yolo11s.pt')  # Sử dụng mô hình YOLOv8 (tiny model)
+model = YOLO('weights/yolo11m.pt')
 model.to(device)
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')
 
 # Khởi tạo DeepSORT
-tracker = DeepSort(max_age=30, nn_budget=100)
+tracker = DeepSort(max_age=48, nn_budget=100)
 
 # Mở video
-video_path = "data/test.mp4"
+video_path = "data/test3.mp4"
 cap = cv2.VideoCapture(video_path)
 
 # Tạo output video
@@ -74,11 +74,17 @@ while cap.isOpened():
         cv2.putText(frame, f"ID: {track_id} {class_name}", (x1, y1 - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
+     # Get original frame dimensions
+    original_height, original_width = frame.shape[:2]
     # Ghi vào file output
     out.write(frame)
 
+    # Calculate new dimensions (60% of the original dimensions)
+    resized_width = int(original_width * 0.2)
+    resized_height = int(original_height * 0.2)
+    resized_frame = cv2.resize(frame, (resized_width, resized_height), interpolation=cv2.INTER_AREA) 
     # Hiển thị khung hình
-    cv2.imshow('YOLOv8 + DeepSORT', frame)
+    cv2.imshow('YOLO + DeepSORT', resized_frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
